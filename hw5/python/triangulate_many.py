@@ -29,7 +29,7 @@ def triangulate_many(xy1, xy2, P1, P2):
         U, R, V = np.linalg.svd(A)
         VT = V.T
         X[:,i] = VT[:,-1]
-        
+
     # NORMALIZING
     X = X/X[-1]
     return X

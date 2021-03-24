@@ -7,14 +7,10 @@ from tqdm import tqdm
 def estimate_E_ransac(xy1, xy2, K, distance_threshold, iterations):
 
     m = 8
-    inlier_count_array = []
-    sample_array = []
-    
-    
+    max_inlier_count = 0
     
     for i in tqdm(range(iterations)):
         sample = np.random.choice(xy1.shape[1], size=m, replace=False)
-        sample_array.append(sample)
         E = estimate_E(xy1[:,sample], xy2[:,sample])
         F = F_from_E(E, K)
         
@@ -28,19 +24,25 @@ def estimate_E_ransac(xy1, xy2, K, distance_threshold, iterations):
         for residual,i in zip(r,range(r.shape[0])):
             if np.abs(residual) <  distance_threshold:
                 inlier_counter += 1
-               
+            
+        #get best E and all the corresponding inliers
+        if max_inlier_count < inlier_counter:
+            max_inlier_count = inlier_counter
+            best_E = E
+            inliers = np.where(np.abs(r) < distance_threshold)
         
-        inlier_count_array.append(inlier_counter)
+
+    
+    inliers = np.array(inliers)
+    inliers = inliers[0,:]
+    xy1 = xy1[:,inliers]
+    xy2 = xy2[:,inliers]
+    
+    print("Inliers found:", max_inlier_count)
+    
                 
-    
-    max_inlier_count = max(inlier_count_array)
-    max_inlier_index = inlier_count_array.index(max(inlier_count_array))
-    best_sample = sample_array[max_inlier_index]
-    E = estimate_E(xy1[:,best_sample], xy2[:,best_sample])
-    print("Size of inlier set:", xy1[:,best_sample].shape)
-    
     #return the essential matrix and associated inlier set that had highest inlier count
-    return E,xy1[:,best_sample],xy2[:,best_sample]
+    return best_E, xy1,xy2
     
     
 
