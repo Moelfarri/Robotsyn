@@ -13,6 +13,8 @@ I = imread('../our_own_data_images_and_figures\scene images/IMG_2441.JPEG');
 sigma_r = 1;
 covariance_r = sigma_r^2 *eye(2*size(u_inliers,2));
 covariance_p = inv(jacobian'*inv(covariance_r)*jacobian);
+Std_cov_p    = sqrt(diag(covariance_p));
+
 
 
 assert(size(X,1) == 4);

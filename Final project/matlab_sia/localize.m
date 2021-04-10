@@ -31,7 +31,13 @@ function  [T_m2q, uv_inliers, X_inliers, jacobian] = localize(K,params,I,X,match
     %P_0 = [worldOrientation, -worldLocation'];
     P0 = [0 0 0 -worldLocation]; 
     R0 = worldOrientation;
-    func =@(P) lsqnonlin_func(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
+    
+    %3.1 Function:
+    %func =@(P) lsqnonlin_func(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
+    
+    %3.3 Weighted Function:
+    func =@(P) lsqnonlin_func_task3_3(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
+    
     
     [pi,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(func, P0);
 
