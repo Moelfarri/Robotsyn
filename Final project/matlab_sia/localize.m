@@ -28,15 +28,18 @@ function  [T_m2q, uv_inliers, X_inliers, jacobian] = localize(K,params,I,X,match
     %         zeros(1,3), 1];
     
     %transform with LM nonlin optimizer
-    P_0 = [worldOrientation, -worldLocation'];
-    func =@(P) lsqnonlin_func(K,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
+    %P_0 = [worldOrientation, -worldLocation'];
+    P0 = [0 0 0 -worldLocation]; 
+    R0 = worldOrientation;
+    func =@(P) lsqnonlin_func(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
     
-    [P_i,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(func, P_0);
+    [pi,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(func, P0);
 
+    T_m2q = return_T(R0, pi(1), pi(2), pi(3), pi(4),pi(5), pi(6));
     
-    T_m2q = [P_i;
-             zeros(1,3), 1];
     
+    
+
     
          
     
