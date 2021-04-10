@@ -5,15 +5,35 @@ K = data.K;
 params = data.params;
 
 I = imread('../our_own_data_images_and_figures\scene images/IMG_2441.JPEG');
+%rand('seed',464); TO GIVE SIMILAR OUTPUT
 
-
-[T_m2q, u_inliers, X_inliers, jacobian]  = localize(K,params,I,X,matchedFeatures2_inlier);
+[T_m2q, u_inliers, X_inliers, jacobian,RoughCameraEstimate]  = localize(K,params,I,X,matchedFeatures2_inlier);
 
 %3.2 Covariance calculations:
 sigma_r = 1;
 covariance_r = sigma_r^2 *eye(2*size(u_inliers,2));
 covariance_p = inv(jacobian'*inv(covariance_r)*jacobian);
 Std_cov_p    = sqrt(diag(covariance_p));
+
+%3.3 Covariance calculations:
+sigma_u = 50;
+sigma_v = 0.1;
+
+n = size(X_inliers,2);
+cov_matrix = eye(2*n);
+cov_matrix(1:n,1:n)     = eye(n)*sigma_u; 
+cov_matrix(n+1:2*n,n+1:2*n) = eye(n)*sigma_v;
+
+covariance_r = cov_matrix;
+covariance_p = inv(jacobian'*inv(covariance_r)*jacobian);
+Std_cov_p    = sqrt(diag(covariance_p));
+
+%3.4 Covariance calculations;
+%NOTE FIRST RUN TASK 11 to get estimation errors object in workspace
+covariance_p = MonteCarloCovarianceEstimator(params,estimationErrors,X_inliers,u_inliers,RoughCameraEstimate);
+Std_cov_p    = sqrt(diag(covariance_p));
+
+
 
 
 

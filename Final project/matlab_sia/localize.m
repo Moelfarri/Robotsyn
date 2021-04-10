@@ -1,4 +1,4 @@
-function  [T_m2q, uv_inliers, X_inliers, jacobian] = localize(K,params,I,X,matchedFeatures2_inlier)
+function  [T_m2q, uv_inliers, X_inliers, jacobian, RoughCameraEstimate] = localize(K,params,I,X,matchedFeatures2_inlier)
 
    
     % %undistort the images when using your own pictures
@@ -28,15 +28,17 @@ function  [T_m2q, uv_inliers, X_inliers, jacobian] = localize(K,params,I,X,match
     %         zeros(1,3), 1];
     
     %transform with LM nonlin optimizer
-    %P_0 = [worldOrientation, -worldLocation'];
+    RoughCameraEstimate = [worldOrientation, -worldLocation'];
+    
     P0 = [0 0 0 -worldLocation]; 
     R0 = worldOrientation;
     
+    
     %3.1 Function:
-    %func =@(P) lsqnonlin_func(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
+    func =@(P) lsqnonlin_func(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
     
     %3.3 Weighted Function:
-    func =@(P) lsqnonlin_func_task3_3(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
+    %func =@(P) lsqnonlin_func_task3_3(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
     
     
     [pi,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(func, P0);

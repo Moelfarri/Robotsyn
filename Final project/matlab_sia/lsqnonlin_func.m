@@ -20,7 +20,6 @@ function r = lsqnonlin_func(K,R0,P,X,uv)
     t = [P(4) P(5) P(6)]';
     T = [R t; zeros(1,3) 1];
      
-
  
     uv_hat_tilde = K*(T(1:3,1:3)*X + T(1:3,4));
     uv_hat = [uv_hat_tilde(1,:)./uv_hat_tilde(3,:); uv_hat_tilde(2,:)./uv_hat_tilde(3,:)];
