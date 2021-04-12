@@ -1,48 +1,36 @@
-
+rand('seed',1);
 %load the data
 data = load('../our_own_data_images_and_figures/data');
 K = data.K;
 params = data.params;
+estimationErrors = data.estimationErrors;
 
-% K = load('../hw5_data_ext/K.txt');
-%for now only use pcitures included
-I1 = imread('../our_own_data_images_and_figures\scene images/IMG_2445.JPEG');
-I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2443.JPEG');
+I1 = imread('../our_own_data_images_and_figures\scene images/IMG_2496.JPEG');
+I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
 
 % %undistort the images when using your own pictures
 [I1, ~ ]  = undistortImage(I1,params);
 [I2, ~ ]  = undistortImage(I2,params);
 
-
 %convert to double
-J1 = im2double(I1); 
-J2 = im2double(I2);
+J1 = rgb2gray(im2double(I1)); 
+J2 = rgb2gray(im2double(I2));
 
-J1 = rgb2gray(J1);
-J2 = rgb2gray(J2);
-
-
-%points1 = detectSURFFeatures(J1);
-%points2 = detectSURFFeatures(J2);
-
+ 
 %extract the neibourhood features
 [features1,valid_points1] = DetectAndExtractFeatures(J1,"ORB");
 [features2,valid_points2] = DetectAndExtractFeatures(J2,"ORB");
 
-
-
 %match the features
-indexPairs = matchFeatures(features1,features2);
-
-
+%APPROXIMATE WORKS GOOD FOR BIG FEATURE SETS
+indexPairs = matchFeatures(features1,features2, 'Method', 'Approximate');
 
 matchedPoints1 = valid_points1(indexPairs(:,1),:);
 matchedPoints2 = valid_points2(indexPairs(:,2),:);
-matchedFeatures1 = features1(indexPairs(:,1),:);
-matchedFeatures2 = features2(indexPairs(:,2),:);
+FeatureDescriptor = features1(indexPairs(:,1),:);
 
-% figure; ax = axes;
-% showMatchedFeatures(J1,J2,matchedPoints1,matchedPoints2,'montage','Parent',ax);
+ %figure; ax = axes;
+ %showMatchedFeatures(J1,J2,matchedPoints1,matchedPoints2,'montage','Parent',ax);
 
 uv1_tilde = [matchedPoints1.Location'; ones(1, size(matchedPoints1.Location,1))];
 uv2_tilde = [matchedPoints2.Location'; ones(1, size(matchedPoints1.Location,1))];
@@ -51,8 +39,7 @@ xy1 = inv(K)*uv1_tilde;
 xy2 = inv(K)*uv2_tilde;
 num_trials  = get_num_ransac_trials(8, 0.99, 0.5);
 [E,inliers] = estimate_E_ransac(xy1, xy2, K, 4, num_trials);
-matchedFeatures1_inlier = matchedFeatures1(inliers,:);
-matchedFeatures2_inlier = matchedFeatures2(inliers,:);
+FeatureDescriptor = FeatureDescriptor(inliers,:);
 
 %find the innliers
 xy1_inliers = xy1(:,inliers);
@@ -77,30 +64,25 @@ for i = 1:4
 end
 X_image_1_tilde = triangulate_many(xy1_inliers, xy2_inliers, P1, P2);
 
-% draw_point_cloud(X_image_1_tilde, im2double(I1), uv1_tilde_inliers, [-2,2], [-2,+2], [0,6]);
-% draw_correspondences(I1, I2, uv1_tilde_inliers, uv2_tilde_inliers, F_from_E(E, K));
-
 R_image_2 = closest_rotation_matrix(P2(1:3,1:3));
 
-X_image_1 = X_image_1_tilde(1:3,:);
+% draw_point_cloud(X_image_1_tilde, im2double(I1), uv1_tilde_inliers, [-3,3], [-3,3], [0,7]);
+uv_cell = cell(2);
+P_cell = cell(2);
+R0_cell = cell(2);
 
-
-number_of_images = 2;
-num_correpondences = size(uv2_tilde_inliers,2);
-
-uv_cell = cell(number_of_images);
-P_cell = cell(number_of_images);
-R0_cell = cell(number_of_images);
 uv_cell(1) = {uv1_inliers};
-P_cell(1) = {zeros(6,1)};
-R0_cell(1) = {eye(3,3)};
 uv_cell(2) = {uv2_inliers};
+
+P_cell(1) = {zeros(6,1)};
 P_cell(2) = {[zeros(1,3) P2(:,4)']'};
+
+R0_cell(1) = {eye(3,3)};
 R0_cell(2) = {R_image_2};
 
 
-[P,X] = LM(100, 1e-3, R0_cell, K , P_cell, X_image_1, uv_cell);
-
+%Run LM
+[P,X] = Levenberg_Marquardt(50, 1e-3, R0_cell, K , P_cell, X_image_1_tilde(1:3,:), uv_cell);
 
 R_image_1 = return_R(R0_cell{1},P{1});
 R_image_2 = return_R(R0_cell{2},P{2});
@@ -108,13 +90,18 @@ R_image_2 = return_R(R0_cell{2},P{2});
 P_1 = [R_image_1,P{1}(4:6)];
 P_2 = [R_image_2,P{2}(4:6)];
 
-%change to camera corrdinates of image 1
+
+
 X_image_1_tilde = [P_1;zeros(1,3),1]*[X;ones(1,size(X,2))];
 draw_point_cloud(X_image_1_tilde, im2double(I1), uv1_tilde_inliers, [-2,2], [-2,+2], [0,6]);
+save('../our_own_data_images_and_figures/data','K','params','estimationErrors','X','FeatureDescriptor', 'P_1','P_2');
 
 
-%I should save the X, uv1 and uv2_inliers, and also maybe P1 and P2
-
-
-
-
+%FOR TASK 4.3:
+u = uv1_inliers;
+u_hat = project(K, X_image_1_tilde);
+e = vecnorm(u_hat - u);
+inlier_corrspondences = size(uv1_inliers,2)
+mean_e = mean(e)
+max_e  = max(e)
+min_e  = min(e)

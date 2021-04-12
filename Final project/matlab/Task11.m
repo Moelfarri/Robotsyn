@@ -34,12 +34,7 @@ showReprojectionErrors(params, 'scatterPlot');
 displayErrors(estimationErrors,params);
 
 K = params.IntrinsicMatrix';
-save('../our_own_data_images_and_figures/data','K','params');
+save('../our_own_data_images_and_figures/data','K','params','estimationErrors');
  
-
-%when you want to read the file, do the following
-% data = load('../our_own_data_images_and_figures/data');
-% K = data.K;
-% params = data.params
 
 

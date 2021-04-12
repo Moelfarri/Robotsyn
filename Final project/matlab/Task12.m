@@ -1,6 +1,7 @@
 %Task 1.2
-%load image
-%figure;
+data = load('../our_own_data_images_and_figures/data');
+estimationErrors = data.estimationErrors;
+params = data.params;
 I = imread('../our_own_data_images_and_figures/cam images/IMG_2346.JPEG');
 
 %inrisic parmeters and lens distortions
@@ -42,7 +43,7 @@ for i = 1:10
     figure;
     [J, newOrigin] = undistortImage(I,cameraParams);
     imshow(J);
-    title('one of the distorted images');
+    title('one of the undistorted images');
 end
 
 

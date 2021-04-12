@@ -1,59 +1,40 @@
-function  [T_m2q, uv_inliers, X_inliers, jacobian, RoughCameraEstimate,uv] = localize(K,params,I,X,matchedFeatures2_inlier)
+function [P_i , X_new, uv_new] =  localize(K,params,I,X,featureDescriptor,weights)
 
-   
     % %undistort the images when using your own pictures
     [I, ~ ]  = undistortImage(I,params);
     
     %convert to double
-    J = im2double(I);
-    J = rgb2gray(J);
+    J = rgb2gray(im2double(I));
     
-     
-    %extract the neibourhood features choose between
-    % SURF, ORB, MSER, BRISK, Harris, FAST, KAZE, MinEigen
-    [features,valid_points] = DetectAndExtractFeatures(J,"SURF");
-    
+    %extract the neibourhood features 
+    %Note model from task2 should have same feature detector as in this
+    %task.
+    [features,valid_points] = DetectAndExtractFeatures(J,"ORB");
     
 
-    indexPairs = matchFeatures(features,matchedFeatures2_inlier);
+    indexPairs = matchFeatures(features,featureDescriptor);
     
     matchedPoints = valid_points(indexPairs(:,1),:);
-    uv = matchedPoints.Location; 
+    uv = matchedPoints.Location';
+    X_matches = X(1:3,indexPairs(:,2));
     
 
-    [worldOrientation, worldLocation,inlierIdx] = estimateWorldCameraPose(double(uv),X(1:3,indexPairs(:,2))',params);
+    [worldOrientation, worldLocation,inlierIdx] = estimateWorldCameraPose(double(uv'),X_matches',params);
     
-    X_matched = X(1:3,indexPairs(:,2));
-    uv = uv';
-
-    %transform without LM nonlin optimizer
-    %T_m2q = [worldOrientation, -worldLocation';
-    %         zeros(1,3), 1];
+    P_i = [0, 0, 0, -worldLocation]';
     
-    %transform with LM nonlin optimizer
-    RoughCameraEstimate = [worldOrientation, -worldLocation'];
-    
-    P0 = [0 0 0 -worldLocation]; 
     R0 = worldOrientation;
+    func =@(P) lsqnonlin_func(K,R0,P,X_matches(:,inlierIdx),uv(:,inlierIdx),weights);
     
+    P_i = lsqnonlin(func, P_i);
+    R = return_R(R0, P_i);
+    t = P_i(4:6);
+    P_i = [R, t];
+    X_new = X_matches(:,inlierIdx);
+    uv_new = uv(:,inlierIdx);
     
-    %3.1 Function:
-    func =@(P) lsqnonlin_func(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
-    
-    %3.3 Weighted Function:
-    %func =@(P) lsqnonlin_func_task3_3(K,R0,P,X_matched(:,inlierIdx),uv(:,inlierIdx));
-    
-    
-    [pi,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(func, P0);
+    inlieridx = size(inlierIdx,1)
+    inlieridxwouthoutliers = size(X_new,2)
 
-    T_m2q = return_T(R0, pi(1), pi(2), pi(3), pi(4),pi(5), pi(6));
-    
-    
-    X_inliers  = X_matched(:,inlierIdx);
-
-    X_inliers  = [X_inliers; ones(1,size(X_inliers,2))];
-    X_inliers = X_inliers(1:4,:);
-    uv_inliers = uv(:,inlierIdx); 
-    
 end
 
