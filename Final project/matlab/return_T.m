@@ -15,7 +15,7 @@ function T = return_T(R0, yaw, pitch, roll, tx, ty, tz)
 
 
     R = Rx*Ry*Rz*R0;
-    t = [tx, ty, tz]';
-    T = [R, t;zeros(1,3), 1];
+    t = [tx ty tz]';
+    T = [R t;zeros(1,3) 1];
 
 end

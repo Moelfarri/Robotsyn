@@ -25,5 +25,5 @@ function draw_point_cloud(X, I1, uv1, my_xlim, my_ylim, my_zlim)
     xlabel('X');
     ylabel('Z');
     zlabel('Y');
-    h = annotation('textbox', [0 0.1 0 0], 'String', '[Hover over the figure with your mouse to access the toolbar, and select the rotator tool to rotate the view.]', 'FitBoxToText', true);
+%     h = annotation('textbox', [0 0.1 0 0], 'String', '[Hover over the figure with your mouse to access the toolbar, and select the rotator tool to rotate the view.]', 'FitBoxToText', true);
 end
