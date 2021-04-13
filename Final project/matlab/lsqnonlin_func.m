@@ -11,11 +11,11 @@ function r = lsqnonlin_func(K,R0,P,X,uv,weights)
     end
     
     if weights == true
-        sigma_u = 50;
-        sigma_v = 0.1;
-        L = diag(kron(ones(1,n),[sigma_u, sigma_v]));
-        %     L = chol(Sigma_r);
-            r = L\r;
+        sigma_u_squared = 50^2;
+        sigma_v_squared = 0.1^2;
+        Covariance = diag(kron(ones(1,n),[sigma_u_squared, sigma_v_squared]));
+        L = chol(Covariance);
+        r = L\r;
     end
 end
 
