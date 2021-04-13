@@ -19,7 +19,7 @@ assert(size(features1,2) == size(features2,2))
 %each other to obtain the Nearest Neighbor Distance Ratio (NNDR), the lower 
 %the NNDR the better the match. The idea
 %is to identify non-related matches by having an acceptance_threshold
-%and then returning the relevant indexpair matches
+%and then returning the relevant indexpair matches based on this threshold.
 
 
 %Defining an acceptance threshold - the lower it is the more restrictive it 
@@ -27,8 +27,6 @@ assert(size(features1,2) == size(features2,2))
 accepted_threshold = 0.9;
 
 % Finding the euclidean distance between the features of both images
-feature_distances = pdist2(features1, features2, 'euclidean');
-
 %feature_distances = zeros(size(features1,1),size(features2,1));
 %for i = 1:size(features2,1)
 %    for j = 1:size(features1,1) 
@@ -36,7 +34,18 @@ feature_distances = pdist2(features1, features2, 'euclidean');
 %    end
 %end
 
+%Euclidean distance - pdist2 is same thing as double for loop but faster
+%feature_distances = pdist2(features1, features2, 'euclidean');
+
+
 %TODO IMPLEMENT - HELLINGER DISTANCE HERE INSTEAD:
+%1. L1 normalization each features individually 
+%2. sqrt each feature individually
+%3. do L2 norm on these modified features
+features1 =sqrt(abs(features1/norm(features1,1)));%Dont know if this is correct
+features2 =sqrt(abs(features2/norm(features2,1))); 
+feature_distances = pdist2(features1,features2, 'euclidean'); %L2
+
 
 
 % sort all of the rows in ascending order 
