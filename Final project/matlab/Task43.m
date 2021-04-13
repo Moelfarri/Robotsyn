@@ -9,7 +9,7 @@ I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
 
 %Choose one of the five Descriptor methods here
 %SURF,KAZE,ORB, BRISK or FREAK into the method variable
-method = 'FREAK';
+method = 'ORB';
 %%
 %Modeling With different feature descriptors 
 
