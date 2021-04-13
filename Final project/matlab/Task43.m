@@ -6,6 +6,10 @@ estimationErrors = data.estimationErrors;
 
 I1 = imread('../our_own_data_images_and_figures\scene images/IMG_2496.JPEG');
 I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
+
+%Choose one of the five Descriptor methods here
+%SURF,KAZE,ORB, BRISK or FREAK into the method variable
+method = 'FREAK';
 %%
 %Modeling With different feature descriptors 
 
@@ -17,10 +21,9 @@ I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
 J1 = rgb2gray(im2double(I1)); 
 J2 = rgb2gray(im2double(I2));
 
-%4.3 Pick from 5 different Feature Descriptors by writing
-%SURF,KAZE,ORB, BRISK or FREAK in the DetectAndExtractFeatures function
-[features1,valid_points1] = DetectAndExtractFeatures(J1,"SURF");
-[features2,valid_points2] = DetectAndExtractFeatures(J2,"SURF");
+%4.3 - 1 of the five feature descriptors
+[features1,valid_points1] = DetectAndExtractFeatures(J1,method);
+[features2,valid_points2] = DetectAndExtractFeatures(J2,method);
 
 
 %match the features
@@ -121,7 +124,13 @@ max_e  = max(e)
 %Choose feature descriptor inside the localize43 function at the bottom
 I = imread('../our_own_data_images_and_figures\scene images/IMG_2492.JPEG');
 rand('seed',1);
-[P_i, X_i, uv_i] = localize43(K,params,I,X,FeatureDescriptor,false);
+weights = false;
+
+if strcmp(method,'ORB')
+    method = "ORB-LOCALIZATION";
+end
+
+[P_i, X_i, uv_i] = localize43(K,params,I,X,FeatureDescriptor,weights,method);
 
 
 
@@ -170,7 +179,7 @@ diag_Covariance_p_sqrt
 
 
 
-function [P_i , X_new, uv_new] =  localize43(K,params,I,X,featureDescriptor,weights)
+function [P_i , X_new, uv_new] =  localize43(K,params,I,X,featureDescriptor,weights,method)
 
     % %undistort the image
     [I, ~ ]  = undistortImage(I,params);
@@ -179,9 +188,8 @@ function [P_i , X_new, uv_new] =  localize43(K,params,I,X,featureDescriptor,weig
     J = rgb2gray(im2double(I));
     
     
-    %4.3 Pick from 5 different Feature Descriptors by writing
-    %SURF,KAZE,ORB, BRISK or FREAK in the DetectAndExtractFeatures function
-    [features,valid_points] = DetectAndExtractFeatures(J,"SURF");
+    %4.3 - one of the 5 feature descriptors
+    [features,valid_points] = DetectAndExtractFeatures(J,method);
     
 
     %find the 

@@ -10,12 +10,15 @@ if method == "SURF"
 elseif method == "ORB"
     %Struggles during matching since it creates way too many features 
     %Reducing NumLevels and choosing ROI helps
-    %Use during modeling
+    %Use during modeling 
+    %points = detectORBFeatures(J,'NumLevels',18); %
     points = detectORBFeatures(J,'NumLevels',4,'ROI',[250 250 size(J,2)-500 size(J,1)-500]);
-    
-    %Use during Localization - can also be used if approximate matching is
-    %used
-    %points = detectORBFeatures(J,'NumLevels',18);
+    [features,valid_points] = extractFeatures(J,points);
+    features = features.Features;
+   
+elseif method =="ORB-LOCALIZATION"
+    %Use during Localization of ORB
+    points = detectORBFeatures(J,'NumLevels',8);
     [features,valid_points] = extractFeatures(J,points);
     features = features.Features;
     
