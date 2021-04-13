@@ -9,9 +9,10 @@ if method == "SURF"
 
 elseif method == "ORB"
     %Struggles during matching since it creates way too many features 
-    %Reducing NumLevels and choosing ROI helps
-    %Use during modeling 
+    %Reducing NumLevels and choosing ROI helps & selectStrongest method is
+    %also a possibility - used during modeling 
     %points = detectORBFeatures(J,'NumLevels',18); %
+    %points = points.selectStrongest(40000);
     points = detectORBFeatures(J,'NumLevels',4,'ROI',[250 250 size(J,2)-500 size(J,1)-500]);
     [features,valid_points] = extractFeatures(J,points);
     features = features.Features;
