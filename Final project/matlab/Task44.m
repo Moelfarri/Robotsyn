@@ -20,13 +20,16 @@ metric = 'EUCLIDEAN';
 J1 = rgb2gray(im2double(I1)); 
 J2 = rgb2gray(im2double(I2));
 
-points1 =  detectSURFFeatures(J1);
-points2 =  detectSURFFeatures(J2);
+%points1 =  detectSURFFeatures(J1);
+%points2 =  detectSURFFeatures(J2);
 
 
 %extract the neibourhood features
-[features1,valid_points1] =  extractFeatures(J1,points1);
-[features2,valid_points2] =  extractFeatures(J2,points2);
+%[features1,valid_points1] =  extractFeatures(J1,points1);
+%[features2,valid_points2] =  extractFeatures(J2,points2);
+
+[valid_points1,features1] = vl_sift(J1);
+[valid_points2,features2] = vl_sift(J1);
 
 
 %Task 4.4 match Nearest Neighbor features with choosen distance
