@@ -23,11 +23,8 @@ points2 =  detectSURFFeatures(J2);
 [features1,valid_points1] =  extractFeatures(J1,points1);
 [features2,valid_points2] =  extractFeatures(J2,points2);
 
-features1 = abs(features1);
-features2 = abs(features2);
-
 %match the features
-indexPairs = matchFeatures(features1,features2); %NNmatcher(features1,features2);  
+indexPairs = matchFeatures(features1,features2);  
 
 matchedPoints1 = valid_points1(indexPairs(:,1),:);
 matchedPoints2 = valid_points2(indexPairs(:,2),:);

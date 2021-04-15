@@ -2,12 +2,12 @@ function  [features,valid_points] =DetectAndExtractFeatures(J,method)
 %J - Is a grayscaled/double image
 %method - Type of feature extraction method
 
-if method == "SURF"
+if strcmp(method,'SURF')
     points = detectSURFFeatures(J);
     [features,valid_points] = extractFeatures(J,points);
 
 
-elseif method == "ORB"
+elseif strcmp(method,'ORB')
     %Struggles during matching since it creates way too many features 
     %Reducing NumLevels and choosing ROI helps & selectStrongest method is
     %also a possibility - used during modeling 
@@ -17,26 +17,26 @@ elseif method == "ORB"
     [features,valid_points] = extractFeatures(J,points);
     features = features.Features;
    
-elseif method =="ORB-LOCALIZATION"
+elseif strcmp(method,'ORB-LOCALIZATION')
     %Use during Localization of ORB
     points = detectORBFeatures(J,'NumLevels',8);
     [features,valid_points] = extractFeatures(J,points);
     features = features.Features;
     
 
-elseif method == "BRISK"
+elseif strcmp(method,'BRISK')
     %Lower Mincontrast gives more features
     points = detectBRISKFeatures(J,'MinContrast',0.12, 'MinQuality', 0.1);
     [features,valid_points] = extractFeatures(J,points);
     features = features.Features;
     
     
-elseif method == "KAZE"
+elseif strcmp(method,'KAZE')
     %Increasing NumScaleLevels between [3-10] gives more features
     points = detectKAZEFeatures(J,'NumScaleLevels',3);
     [features,valid_points] = extractFeatures(J,points);
 
-elseif method == "FREAK"
+elseif strcmp(method,'FREAK')
     %Use BRISK feature detector as in the FREAK descriptor (Alahi et al. 2012)
     points = detectBRISKFeatures(J,'MinContrast',0.14);
     [features,valid_points] = extractFeatures(J,points,'Method','FREAK');

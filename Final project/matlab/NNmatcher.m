@@ -1,8 +1,9 @@
-function indexPairs = NNmatcher(features1, features2)
+function indexPairs = NNmatcher(features1, features2,metric)
 assert(size(features1,2) == size(features2,2))
 %Input: 
 %      features1 : n_1 x m 
-%      features2 : n_2 x m   
+%      features2 : n_2 x m
+%      metric    : EUCLIDEAN, Chi-Squared, Hellinger
 %      Note that n_1 can be the same as n_2 but not necessarily
 %      features1 and features2 are SURF features detected by the
 %      SURF detection algorithm of two different images.
@@ -34,36 +35,42 @@ accepted_threshold = 0.7;
 %    end
 %end
 
-%Euclidean distance - pdist2 is same thing as double for loop but faster
-%feature_distances = pdist2(features1, features2, 'euclidean');
 
+if  strcmp(metric,'HELLINGER')
 
-%TODO IMPLEMENT - HELLINGER DISTANCE HERE INSTEAD:
-%1. L1 normalization each features individually 
-%2. sqrt each feature individually
-%3. do L2 norm on these modified features
+%Hellinger distance As suggested by Arandjelovi ́c, R. and A. 
+%Zisserman (2012)- "Three things everyone should know
+%to improve object retrieval":
 
+%L1 Normalization of features
+features1 = features1/norm(features1,1); 
+features2 = features2/norm(features2,1);
 
-
-%Euclidean
-%feature_distances = pdist2(features1,features2, 'euclidean'); %L2
-
-%Chi^2 distances
-%feature_distances  = distChiSq(features1,features2); 
-
-%hellinger distances
+%Absolute value - ADDED BY US ORIGINAL PAPER SUGGESTS ONLY
+%L1 Normalization of features & Squareroot of features befor
+%Euclidean matching
 features1 = abs(features1);
 features2 = abs(features2);
 
-features1 = features1/norm(features1,1); 
+%Squareroot of features
 features1 = sqrt(features1);
-
-features2 = features2/norm(features2,1);
 features2 = sqrt(features2);
 
+%Euclidean distance done after these Hellinger modifactions
 feature_distances = pdist2(features1,features2, 'euclidean');
+    
+elseif strcmp(metric,'CHISQUARED')
+    %Chi^2 distances
+feature_distances  = distChiSq(features1,features2); 
 
-
+elseif strcmp(metric,'EUCLIDEAN')
+    %Euclidean distance
+ feature_distances = pdist2(features1, features2, 'EUCLIDEAN');
+    
+else
+ feature_distances = -1;
+ assert(feature_distances == -1);
+end 
 
 
 % sort all of the rows in ascending order 
