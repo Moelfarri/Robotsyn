@@ -16,15 +16,18 @@ I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
 J1 = rgb2gray(im2double(I1)); 
 J2 = rgb2gray(im2double(I2));
 
-points1 = detectSURFFeatures(J1);
-points2 = detectSURFFeatures(J2);
+points1 =  detectSURFFeatures(J1);
+points2 =  detectSURFFeatures(J2);
 
 %extract the neibourhood features
-[features1,valid_points1] = extractFeatures(J1,points1);
-[features2,valid_points2] = extractFeatures(J2,points2);
+[features1,valid_points1] =  extractFeatures(J1,points1);
+[features2,valid_points2] =  extractFeatures(J2,points2);
+
+features1 = abs(features1);
+features2 = abs(features2);
 
 %match the features
-indexPairs = matchFeatures(features1,features2);
+indexPairs = matchFeatures(features1,features2); %NNmatcher(features1,features2);  
 
 matchedPoints1 = valid_points1(indexPairs(:,1),:);
 matchedPoints2 = valid_points2(indexPairs(:,2),:);
@@ -100,9 +103,8 @@ real_distance = 2.5;
 scaling_factor = real_distance / model_distance;
 X = scaling_factor*X;
 
-% draw_point_cloud(X, im2double(I1), uv1_tilde_inliers, [-3,3], [-3,3], [2,7]);
-
-save('../our_own_data_images_and_figures/data','K','params','estimationErrors','X','FeatureDescriptor', 'P_1','P_2');
+draw_point_cloud(X, im2double(I1), uv1_tilde_inliers, [-3,3], [-3,3], [2,7]);
+%save('../our_own_data_images_and_figures/data','K','params','estimationErrors','X','FeatureDescriptor', 'P_1','P_2');
 
 
 

@@ -23,8 +23,8 @@ assert(size(features1,2) == size(features2,2))
 
 
 %Defining an acceptance threshold - the lower it is the more restrictive it 
-%is on what is defined as matched features
-accepted_threshold = 0.9;
+%is on what is defined as matched features (SURF paper defines this to 0.7)
+accepted_threshold = 0.7;
 
 % Finding the euclidean distance between the features of both images
 %feature_distances = zeros(size(features1,1),size(features2,1));
@@ -42,9 +42,27 @@ accepted_threshold = 0.9;
 %1. L1 normalization each features individually 
 %2. sqrt each feature individually
 %3. do L2 norm on these modified features
-features1 =sqrt(abs(features1/norm(features1,1)));%Dont know if this is correct
-features2 =sqrt(abs(features2/norm(features2,1))); 
-feature_distances = pdist2(features1,features2, 'euclidean'); %L2
+
+
+
+%Euclidean
+%feature_distances = pdist2(features1,features2, 'euclidean'); %L2
+
+%Chi^2 distances
+%feature_distances  = distChiSq(features1,features2); 
+
+%hellinger distances
+features1 = abs(features1);
+features2 = abs(features2);
+
+features1 = features1/norm(features1,1); 
+features1 = sqrt(features1);
+
+features2 = features2/norm(features2,1);
+features2 = sqrt(features2);
+
+feature_distances = pdist2(features1,features2, 'euclidean');
+
 
 
 
