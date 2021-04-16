@@ -8,7 +8,13 @@ I1 = imread('../our_own_data_images_and_figures\scene images/IMG_2496.JPEG');
 I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
 
 %CHOOSE DISTANCE METRIC HERE: EUCLIDEAN, HELLINGER OR CHISQUARED
-metric = 'EUCLIDEAN';
+metric = 'HELLINGER';
+
+%CHOOSE SIFT OR SURF METHOD:
+%Note to use SIFT, you need to download a custom toolbox called
+%'Computer vision feature extraction toolbox'
+%By Aditya Khosla
+method = 'SIFT';
 %%
 %Modeling With different feature descriptors 
 
@@ -20,31 +26,65 @@ metric = 'EUCLIDEAN';
 J1 = rgb2gray(im2double(I1)); 
 J2 = rgb2gray(im2double(I2));
 
-%points1 =  detectSURFFeatures(J1);
-%points2 =  detectSURFFeatures(J2);
+if strcmp(method,'SURF')
+    points1 =  detectSURFFeatures(J1);
+    points2 =  detectSURFFeatures(J2);
+    
+    %extract the neibourhood features
+    [features1,valid_points1] =  extractFeatures(J1,points1);
+    [features2,valid_points2] =  extractFeatures(J2,points2);
+    
+    %Task 4.4 match Nearest Neighbor features with choosen distance
+    indexPairs = NNmatcher(features1,features2,metric);
+
+elseif strcmp(method,'SIFT')
+    [features1, x1, y1, wid1, hgt1] = extract_sift(J1);
+    valid_points1 = [x1, y1];
+    
+    [features2, x2, y2, wid2, hgt2] = extract_sift(J2);
+    valid_points2 = [x2, y2];
+    
+    %Limit features because of matcher bottleneck
+    %sample = randperm(size(features1, 1), 40000);
+    %features1 = features1(sample,:);
+    %features2 = features2(sample,:);
+    %indexPairs = NNmatcher(features1,features2,metric);
+     
+    if strcmp(metric,'HELLINGER')
+        
+    %Step 1 - L1 Normalization of features
+    features1 = features1/norm(features1,1); 
+    features2 = features2/norm(features2,1);
+
+    %Step 2 - Squareroot of features
+    features1 = sqrt(features1);
+    features2 = sqrt(features2);
+    end
+    
+    rand('seed',1);
+    indexPairs =  matchFeatures(features1,features2,'Method', 'Approximate','MaxRatio',0.7);
+end
 
 
-%extract the neibourhood features
-%[features1,valid_points1] =  extractFeatures(J1,points1);
-%[features2,valid_points2] =  extractFeatures(J2,points2);
-
-[valid_points1,features1] = vl_sift(J1);
-[valid_points2,features2] = vl_sift(J1);
-
-
-%Task 4.4 match Nearest Neighbor features with choosen distance
-indexPairs = NNmatcher(features1,features2,metric);  
 
 
 matchedPoints1 = valid_points1(indexPairs(:,1),:);
 matchedPoints2 = valid_points2(indexPairs(:,2),:);
-FeatureDescriptor = features1(indexPairs(:,1),:);
+FeatureDescriptor = features1(indexPairs(:,1),:); %For Localization
 
-% figure; ax = axes;
-% showMatchedFeatures(J1,J2,matchedPoints1,matchedPoints2,'montage','Parent',ax);
+%figure; ax = axes;
+%showMatchedFeatures(J1,J2,matchedPoints1,matchedPoints2,'montage','Parent',ax);
 
+ 
+ 
+if strcmp(method,'SURF') 
 uv1_tilde = [matchedPoints1.Location'; ones(1, size(matchedPoints1.Location,1))];
 uv2_tilde = [matchedPoints2.Location'; ones(1, size(matchedPoints1.Location,1))];
+elseif strcmp(method,'SIFT')
+uv1_tilde = [matchedPoints1'; ones(1, size(matchedPoints1,1))];
+uv2_tilde = [matchedPoints2'; ones(1, size(matchedPoints1,1))];
+end
+
 
 %Cross checking with E RANSAC 
 rand('seed',1);
@@ -92,6 +132,7 @@ P_cell(2) = {[zeros(1,3) P2(:,4)']'};
 
 R0_cell(1) = {eye(3,3)};
 R0_cell(2) = {R_image_2};
+
 
 
 

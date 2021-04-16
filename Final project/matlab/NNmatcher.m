@@ -37,6 +37,14 @@ accepted_threshold = 0.7;
 
 
 if  strcmp(metric,'HELLINGER')
+    
+    
+%Absolute value - ADDED BY US ORIGINAL PAPER SUGGESTS ONLY
+%L1 Normalization of features & Squareroot of features befor
+%Euclidean matching
+features1 = abs(features1);
+features2 = abs(features2);
+    
 
 %Hellinger distance As suggested by Arandjelovi ́c, R. and A. 
 %Zisserman (2012)- "Three things everyone should know
@@ -45,12 +53,6 @@ if  strcmp(metric,'HELLINGER')
 %L1 Normalization of features
 features1 = features1/norm(features1,1); 
 features2 = features2/norm(features2,1);
-
-%Absolute value - ADDED BY US ORIGINAL PAPER SUGGESTS ONLY
-%L1 Normalization of features & Squareroot of features befor
-%Euclidean matching
-features1 = abs(features1);
-features2 = abs(features2);
 
 %Squareroot of features
 features1 = sqrt(features1);

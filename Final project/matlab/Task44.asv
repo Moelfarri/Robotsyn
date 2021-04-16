@@ -1,3 +1,4 @@
+rand('seed',1);
 %load the data
 data = load('../our_own_data_images_and_figures/data');
 K = data.K;
@@ -8,7 +9,11 @@ I1 = imread('../our_own_data_images_and_figures\scene images/IMG_2496.JPEG');
 I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
 
 %CHOOSE DISTANCE METRIC HERE: EUCLIDEAN, HELLINGER OR CHISQUARED
-metric = 'HELLINGER';
+metric = 'EUCLIDEAN';
+%CHOOSE SIFT OR SURF METHOD:
+%Note to use SIFT, you need to download a custom toolbox
+%'Computer vision feature extraction toolbox'
+method = 'SIFT';
 %%
 %Modeling With different feature descriptors 
 
@@ -20,28 +25,52 @@ metric = 'HELLINGER';
 J1 = rgb2gray(im2double(I1)); 
 J2 = rgb2gray(im2double(I2));
 
-points1 =  detectSURFFeatures(J1);
-points2 =  detectSURFFeatures(J2);
+if strcmp(method,'SURF')
+    points1 =  detectSURFFeatures(J1);
+    points2 =  detectSURFFeatures(J2);
+    
+    %extract the neibourhood features
+    [features1,valid_points1] =  extractFeatures(J1,points1);
+    [features2,valid_points2] =  extractFeatures(J2,points2);
+    
+    %Task 4.4 match Nearest Neighbor features with choosen distance
+    indexPairs = NNmatcher(features1,features2,metric);
+
+elseif strcmp(method,'SIFT')
+    [features1, x1, y1, wid1, hgt1] = extract_sift(J1);
+    valid_points1 = [x1, y1];
+    
+    
+    [features2, x2, y2, wid2, hgt2] = extract_sift(J2);
+    valid_points2 = [x2, y2];
+    
+   % features1 = features1(sample,:);
+    %features2 = features2(sample,:);
+    
+    
+    indexPairs =  matchFeatures(features1,features2,'Method', 'Approximate');
+end
 
 
-%extract the neibourhood features
-[features1,valid_points1] =  extractFeatures(J1,points1);
-[features2,valid_points2] =  extractFeatures(J2,points2);
-
-
-%Task 4.4 match Nearest Neighbor features with choosen distance
-indexPairs = NNmatcher(features1,features2,metric);  
 
 
 matchedPoints1 = valid_points1(indexPairs(:,1),:);
 matchedPoints2 = valid_points2(indexPairs(:,2),:);
 FeatureDescriptor = features1(indexPairs(:,1),:);
 
-% figure; ax = axes;
-% showMatchedFeatures(J1,J2,matchedPoints1,matchedPoints2,'montage','Parent',ax);
+figure; ax = axes;
+showMatchedFeatures(J1,J2,matchedPoints1,matchedPoints2,'montage','Parent',ax);
 
+ 
+ 
+if strcmp(method,'SURF') 
 uv1_tilde = [matchedPoints1.Location'; ones(1, size(matchedPoints1.Location,1))];
 uv2_tilde = [matchedPoints2.Location'; ones(1, size(matchedPoints1.Location,1))];
+elseif strcmp(method,'SIFT')
+uv1_tilde = [matchedPoints1'; ones(1, size(matchedPoints1,1))];
+uv2_tilde = [matchedPoints2'; ones(1, size(matchedPoints1,1))];
+end
+
 
 %Cross checking with E RANSAC 
 rand('seed',1);
@@ -74,8 +103,7 @@ for i = 1:4
    end
 end
 X_image_1_tilde = triangulate_many(xy1_inliers, xy2_inliers, P1, P2);
-R_image_2 = closest_rotation_matrix(P2(1:3,1:3))
-
+R_image_2 = closest_rotation_matrix(P2(1:3,1:3));
 
 %Put data in cells
 uv_cell = cell(2);
@@ -110,119 +138,12 @@ X_image_1_tilde = [P_1;zeros(1,3),1]*[X;ones(1,size(X,2))];
 u_hat = project(K, X_image_1_tilde);
 e = vecnorm(u_hat - u);
 
-disp("Modeling Data for 4.3:")
+disp("Modeling Data for 4.4:")
 inliers_and_outliers = size(inliers,2)
 inlier_corrspondences_only = size(uv1_inliers,2)
-min_e  = min(e)
 mean_e = mean(e)
-max_e  = max(e)
-
-
-
-
-%%
-%Different feature descriptors during localization 
-%Note you have to run the same descriptor in both parts 
-%Choose feature descriptor inside the localize43 function at the bottom
-I = imread('../our_own_data_images_and_figures\scene images/IMG_2492.JPEG');
-rand('seed',1);
-weights = false;
-
-
-[P_i, X_i, uv_i] = localize44(K,params,I,X,FeatureDescriptor,weights,metric);
-
-
-
-p = [0, 0, 0, P_i(:,4)']';
-%comptue J
-epsilon = 1e-5;
-Epsilon = diag(epsilon*ones(6,1));
-n = size(uv_i, 2); 
-J = zeros(2*n,6);
-%compute J
-for i = 1:6   
-   J_temp_right =  lsqnonlin_func(K,P_i(1:3,1:3),p + Epsilon(:,i),X_i,uv_i,weights);
-   J_temp_left =  lsqnonlin_func(K,P_i(1:3,1:3),p - Epsilon(:,i),X_i,uv_i,weights);
-   J(:,i) = (J_temp_right - J_temp_left)/(2*epsilon);
-end
-
-%Compute Covaraince matrix
-sigma_r  = 1; 
-Covariance_r = sigma_r *eye(2*n);
-Covariance_p = (J.'*(Covariance_r)^(-1)*J)^(-1);
-
-%Find the diagonal entries and the square root
-diag_Covariance_p = diag(Covariance_p);
-diag_Covariance_p_sqrt= sqrt(diag_Covariance_p(:));
-
-%Convert to degrees and mm
-diag_Covariance_p_sqrt(1:3) = diag_Covariance_p_sqrt(1:3)*180/pi;
-
-diag_Covariance_p_sqrt(4:6) = diag_Covariance_p_sqrt(4:6)*10^3;
 
 
 
 
 
-
-%PRINT DATA:
-disp("Localization Data for 4.3:");
-u = uv_i;
-u_hat = project(K, [P_i;zeros(1,3),1]*[X_i;ones(1,size(X_i,2))]);
-e = vecnorm(u_hat - u);
-
-min_e  = min(e)
-mean_e = mean(e)
-max_e  = max(e)
-diag_Covariance_p_sqrt
-
-
-
-function [P_i , X_new, uv_new] =  localize44(K,params,I,X,featureDescriptor,weights,metric)
-
-    % %undistort the image
-    [I, ~ ]  = undistortImage(I,params);
-    
-    %convert to double and grescale
-    J = rgb2gray(im2double(I));
-    
-    
-    points =  detectSURFFeatures(J);
-
-
-    %extract the neibourhood features    
-    [features ,valid_points] =  extractFeatures(J,points);
-
-
-    
-
-  
-    %Task 4.4 match Nearest Neighbor features with choosen distance
-    indexPairs1 = NNmatcher(features,featureDescriptor,'');  
-    
-    %find 2D -3D correspondences
-    uv = double(valid_points(indexPairs1(:,1),:).Location)';
-    X_matches = X(1:3,indexPairs1(:,2));
-    
-    %Find rough estiamtes of pose and an inlier set using MSAC (Similar to RANSAC)
-    [worldOrientation, worldLocation,inlierIdx] = estimateWorldCameraPose(uv',X_matches',params);
-    
-    %Use nonlinear solver
-    P_i = [0, 0, 0, -worldLocation]';
-    R0 = worldOrientation;
-    func =@(P) lsqnonlin_func(K,R0,P,X_matches(:,inlierIdx),uv(:,inlierIdx),weights);
-    
-    P_i = lsqnonlin(func, P_i);
-    R = return_R(R0, P_i);
-    t = P_i(4:6);
-    
-    %Return pose, the 3D inlier set, and the uv inlier set
-    P_i = [R, t];
-    X_new = X_matches(:,inlierIdx);
-    uv_new = uv(:,inlierIdx);
-    
-    %Print inliers
-    inliers_and_outliers = size(inlierIdx,1)
-    inlier_corrspondences_only = size(X_new,2)
-
-end
