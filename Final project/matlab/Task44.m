@@ -8,6 +8,7 @@ I1 = imread('../our_own_data_images_and_figures\scene images/IMG_2496.JPEG');
 I2 = imread('../our_own_data_images_and_figures\scene images/IMG_2497.JPEG');
 
 %CHOOSE DISTANCE METRIC HERE: EUCLIDEAN, HELLINGER OR CHISQUARED
+%CHISQUARED ONLY IMPLEMENTED FOR SURF
 metric = 'HELLINGER';
 
 %CHOOSE SIFT OR SURF METHOD:
